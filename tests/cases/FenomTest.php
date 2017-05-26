@@ -116,6 +116,19 @@ class FenomTest extends \Fenom\TestCase
         $this->assertSame("Custom template (new)", $this->fenom->fetch('custom.tpl', array()));
     }
 
+    /**
+     * @group dev
+     */
+    public function testCompileIdAndName()
+    {
+        $this->fenom->setCompileId("iddqd.");
+        $this->tpl('custom.tpl', 'Custom template');
+        $this->assertSame("Custom template", $this->fenom->fetch('custom.tpl', array()));
+        $compile_name = $this->fenom->getCompileName('custom.tpl');
+        $this->assertFileExists($this->getCompilePath().'/'.$compile_name);
+        $this->assertStringStartsWith('iddqd.', $compile_name);
+    }
+
     public function testSetModifier()
     {
         $this->fenom->addModifier("mymod", "myMod");
@@ -308,7 +321,7 @@ class FenomTest extends \Fenom\TestCase
 
 
     /**
-     * @requires function php_gte_54
+     * @requires PHP 5.4
      * @group pipe
      */
     public function testPipe()
@@ -347,7 +360,19 @@ class FenomTest extends \Fenom\TestCase
     <a href="/item/{\$one}">number  {\$num.1}</a>
 </div>
 TPL;
-        $this->assertRender($tpl, '<div class="item item-one"> <a href="/item/1">number one</a> </div>');
+        $this->assertRender($tpl, '<div class="item item-one"><a href="/item/1">number one</a></div>');
+    }
+
+    /**
+     * Bug #195
+     * @group strip-xml
+     */
+    public function testStripXML() {
+        $this->fenom->setOptions(Fenom::AUTO_STRIP);
+        $tpl = <<<TPL
+<?xml version="1.0"?>
+TPL;
+        $this->assertRender($tpl, '<?xml version="1.0"?>');
     }
 }
 

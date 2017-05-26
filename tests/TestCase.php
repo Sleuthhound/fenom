@@ -48,15 +48,20 @@ class TestCase extends \PHPUnit_Framework_TestCase
         );
     }
 
+    public function getCompilePath()
+    {
+        return FENOM_RESOURCES . '/compile';
+    }
+
     public function setUp()
     {
-        if (!file_exists(FENOM_RESOURCES . '/compile')) {
-            mkdir(FENOM_RESOURCES . '/compile', 0777, true);
+        if (!file_exists($this->getCompilePath())) {
+            mkdir($this->getCompilePath(), 0777, true);
         } else {
-            FS::clean(FENOM_RESOURCES . '/compile/');
+            FS::clean($this->getCompilePath());
         }
 
-        $this->fenom = Fenom::factory(FENOM_RESOURCES . '/' . $this->template_path, FENOM_RESOURCES . '/compile');
+        $this->fenom = Fenom::factory(FENOM_RESOURCES . '/' . $this->template_path, $this->getCompilePath());
         $this->fenom->addProvider('persist', new Provider(FENOM_RESOURCES . '/provider'));
         $this->fenom->addModifier('dots', __CLASS__ . '::dots');
         $this->fenom->addModifier('concat', __CLASS__ . '::concat');
@@ -109,6 +114,12 @@ class TestCase extends \PHPUnit_Framework_TestCase
         }
         file_put_contents(FENOM_RESOURCES . '/template/' . $name, $code);
         return filemtime(FENOM_RESOURCES . '/template/' . $name);
+    }
+
+    public function tpls(array $list) {
+        foreach($list as $name => $tpl) {
+            $this->tpl($name, $tpl);
+        }
     }
 
     /**

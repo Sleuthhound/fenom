@@ -28,14 +28,52 @@ class Accessor {
         'env'     => '$_ENV'
     );
 
-    public static function parserVar($var, Tokenizer $tokens, Template $tpl, &$is_var) {
+    /**
+     * @param string $var variable expression on PHP ('App::get("storage")->user')
+     * @param Tokenizer $tokens
+     * @param Template $tpl
+     * @param $is_var
+     * @return string
+     */
+    public static function parserVar($var, Tokenizer $tokens, Template $tpl, &$is_var)
+    {
         $is_var = true;
         return $tpl->parseVariable($tokens, $var);
     }
 
-
-    public static function parserCall($call, Tokenizer $tokens, Template $tpl) {
+    /**
+     * @param string $call method name expression on PHP ('App::get("storage")->getUser')
+     * @param Tokenizer $tokens
+     * @param Template $tpl
+     * @return string
+     */
+    public static function parserCall($call, Tokenizer $tokens, Template $tpl)
+    {
         return $call.$tpl->parseArgs($tokens);
+    }
+
+    /**
+     * @param string $prop fenom's property name
+     * @param Tokenizer $tokens
+     * @param Template $tpl
+     * @param $is_var
+     * @return string
+     */
+    public static function parserProperty($prop, Tokenizer $tokens, Template $tpl, &$is_var)
+    {
+        $is_var = true;
+        return self::parserVar('$tpl->getStorage()->'.$prop, $tokens, $tpl, $is_var);
+    }
+
+    /**
+     * @param string $method fenom's method name
+     * @param Tokenizer $tokens
+     * @param Template $tpl
+     * @return string
+     */
+    public static function parserMethod($method, Tokenizer $tokens, Template $tpl)
+    {
+        return self::parserCall('$tpl->getStorage()->'.$method, $tokens, $tpl);
     }
 
     /**
@@ -70,6 +108,9 @@ class Accessor {
         }
     }
 
+    /**
+     * @return string
+     */
     public static function version()
     {
         return 'Fenom::VERSION';
@@ -98,7 +139,7 @@ class Accessor {
      * @param Template $tpl
      * @return string
      */
-    public static function php(Tokenizer $tokens, Template $tpl)
+    public static function call(Tokenizer $tokens, Template $tpl)
     {
         $callable = array($tokens->skip('.')->need(Tokenizer::MACRO_STRING)->getAndNext());
         while($tokens->is('.')) {
@@ -151,5 +192,22 @@ class Accessor {
         }
         $tokens->skip(')');
         return '$tpl->getStorage()->fetch('.$name.', '.$vars.')';
+    }
+
+    /**
+     * Accessor {$.block.NAME}
+     * @param Tokenizer $tokens
+     * @param Template $tpl
+     * @return mixed
+     */
+    public static function block(Tokenizer $tokens, Template $tpl)
+    {
+        if($tokens->is('.')) {
+            $name = $tokens->next()->get(Tokenizer::MACRO_STRING);
+            $tokens->next();
+            return isset($tpl->blocks[$name]) ? 'true' : 'false';
+        } else {
+            return "array(".implode(",", array_keys($tpl->blocks)).")";
+        }
     }
 } 
